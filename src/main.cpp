@@ -1,65 +1,88 @@
 #include <Arduino.h>
 #include <Servo.h>
 
-#define BUZZER_PIN     2   // Gate of N-MOSFET controlling passive buzzer
-#define LED_GREEN_PIN  4   // Your green status LED
+#define CRSF_ADDRESS             0xC8
+#define CRSF_FRAME_RC_CHANNELS   0x16
+#define CRSF_MAX_CHANNELS        16
 
-Servo esc;
+//–– Globals for CRSF parsing
+uint8_t  crsfPacket[64];
+uint8_t  packetIndex = 0;
+bool     receiving   = false;
+uint16_t rcChannels[CRSF_MAX_CHANNELS];
+
+//–– Servo for ESC on pin 6
+Servo esc0, esc1, esc2, esc3;
 
 void setup() {
-  // — Pin & serial setup —
   Serial.begin(115200);
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(BUZZER_PIN, OUTPUT);
-  pinMode(LED_GREEN_PIN, OUTPUT);
+  Serial4.begin(420000);
 
-  // Ensure green LED in “off” state
-  analogWrite(LED_GREEN_PIN, 255);
-  delay(500);
+  // attach ESC signal pin
+  esc0.attach(0);  
+  esc1.attach(1);
+  esc2.attach(25);
+  esc3.attach(33);
 
-  // — Do-do-do-do-do … do-do jingle —
-  // 5 short “do”s (200 ms beep + 200 ms gap)
-  for (int i = 0; i < 5; i++) {
-    analogWrite(LED_GREEN_PIN, 225);
-    tone(BUZZER_PIN, 2000);
-    delay(200);
-    noTone(BUZZER_PIN);
-    analogWrite(LED_GREEN_PIN, 255);
-    delay(200);
+  Serial.println("🔧 ELRS + PWM 4 Motor Test Starting…");
+}
+
+//— parse a complete CRSF frame
+void parseCRSF(uint8_t *data, uint8_t len) {
+  if (data[2] != CRSF_FRAME_RC_CHANNELS) return;
+
+  // unpack 16 channels, 11 bits each
+  uint8_t  *payload = data + 3;
+  uint32_t bits     = 0;
+  uint8_t  bitCount = 0, ch = 0;
+  for (int i = 0; i < 22 && ch < CRSF_MAX_CHANNELS; i++) {
+    bits     |= uint32_t(payload[i]) << bitCount;
+    bitCount += 8;
+    while (bitCount >= 11 && ch < CRSF_MAX_CHANNELS) {
+      rcChannels[ch++] = bits & 0x7FF;
+      bits >>= 11;
+      bitCount -= 11;
+    }
   }
-  // Pause before the final two
-  delay(500);
-  // 2 longer “do”s (400 ms beep + 400 ms gap)
-  for (int i = 0; i < 2; i++) {
-    analogWrite(LED_GREEN_PIN, 225);
-    tone(BUZZER_PIN, 2000);
-    delay(400);
-    noTone(BUZZER_PIN);
-    analogWrite(LED_GREEN_PIN, 255);
-    delay(400);
-  }
 
-  // Hold green LED on while we finish boot
-  analogWrite(LED_GREEN_PIN, 225);
-  while (!Serial) { /* wait for USB-Serial */ }
-  Serial.println("Booting...");
-  digitalWrite(LED_BUILTIN, HIGH);
+  // Debug: print first 4 channels
+  Serial.print("CH0="); Serial.print(rcChannels[0]);
+  Serial.print(" CH1="); Serial.print(rcChannels[1]);
+  Serial.print(" CH2(th)="); Serial.print(rcChannels[2]);
+  Serial.print(" CH3="); Serial.print(rcChannels[3]);
 
-  // — Initialize ESC on pin 10 —
-  esc.attach(10);
-  esc.writeMicroseconds(1000);  // zero throttle
+  // —— THROTTLE → PWM ——
+  // Map raw 11-bit throttle (≈172–1811) → 1000–2000 µs
+  int raw   = rcChannels[2];
+  int pulse = map(raw, 172, 1811, 1000, 2000);
+  pulse = constrain(pulse, 1000, 2000);
+
+  esc0.writeMicroseconds(pulse);
+  esc1.writeMicroseconds(pulse);
+  esc2.writeMicroseconds(pulse);
+  esc3.writeMicroseconds(pulse);
+
+  Serial.print("  PWM(us)="); Serial.println(pulse);
 }
 
 void loop() {
-  // Blink the onboard LED at 2 Hz
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(250);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(250);
+  // Read and frame bytes from Serial4
+  while (Serial4.available()) {
+    uint8_t b = Serial4.read();
 
-  // ESC throttle bump
-  esc.writeMicroseconds(1200);
-  delay(1000);
-  esc.writeMicroseconds(1000);
-  delay(1000);
+    if (!receiving) {
+      if (b == CRSF_ADDRESS) {
+        receiving   = true;
+        packetIndex = 0;
+        crsfPacket[packetIndex++] = b;
+      }
+    } else {
+      crsfPacket[packetIndex++] = b;
+      // once we've collected (length + 2) bytes, parse
+      if (packetIndex > 2 && packetIndex >= crsfPacket[1] + 2) {
+        receiving = false;
+        parseCRSF(crsfPacket, crsfPacket[1] + 2);
+      }
+    }
+  }
 }
