@@ -44,27 +44,44 @@ void parseCRSF(uint8_t *data, uint8_t len) {
       bitCount -= 11;
     }
   }
-
-  // Debug: print first 4 channels
+  //Print out all 4 channels
   Serial.print("CH0="); Serial.print(rcChannels[0]);
   Serial.print(" CH1="); Serial.print(rcChannels[1]);
   Serial.print(" CH2(th)="); Serial.print(rcChannels[2]);
   Serial.print(" CH3="); Serial.print(rcChannels[3]);
 
-  // —— THROTTLE → PWM ——
-  // Map raw 11-bit throttle (≈172–1811) → 1000–2000 µs
-  int raw   = rcChannels[2];
-  int pulse = map(raw, 172, 1811, 1000, 2000);
-  pulse = constrain(pulse, 1000, 2000);
+  // Remap raw values of each channel
+ int roll     = map(rcChannels[0], 172, 1811, -500, 500);   // CH0
+ int pitch    = map(rcChannels[1], 172, 1811, -500, 500);   // CH1
+ int throttle = map(rcChannels[2], 172, 1811, 1000, 2000);  // CH2
+ int yaw      = map(rcChannels[3], 172, 1811, -500, 500);   // CH3
 
-  esc0.writeMicroseconds(pulse);
-  esc1.writeMicroseconds(pulse);
-  esc2.writeMicroseconds(pulse);
-  esc3.writeMicroseconds(pulse);
+ //Motor directional combinations **CHOOSE CORRECT PINS IN HARDWARE FOR EACH**
+ int m0 = throttle + pitch + roll - yaw; // esc0 = Front Left  (CW)
+ int m1 = throttle + pitch - roll + yaw; // esc1 = Front Right (CCW)
+ int m2 = throttle - pitch - roll - yaw; // esc2 = Rear Right  (CW)
+ int m3 = throttle - pitch + roll + yaw; // esc3 = Rear Left   (CCW)
 
-  Serial.print("  PWM(us)="); Serial.println(pulse);
+ //Constraints so ESC's dont blow up
+ m0 = constrain(m0, 1000, 2000);
+ m1 = constrain(m1, 1000, 2000);
+ m2 = constrain(m2, 1000, 2000);
+ m3 = constrain(m3, 1000, 2000);
+
+ //PWM signals to each ESC to motors
+ esc0.writeMicroseconds(m0);
+ esc1.writeMicroseconds(m1);
+ esc2.writeMicroseconds(m2);
+ esc3.writeMicroseconds(m3);
+
+ //Make sure we can see it
+ Serial.print("  M0="); Serial.print(m0);
+ Serial.print(" M1="); Serial.print(m1);
+ Serial.print(" M2="); Serial.print(m2);
+ Serial.print(" M3="); Serial.println(m3);
 }
 
+//This loop basically says "is there new information? Okay lets parse it and return" its like a software based interrupt but with a UART signal instead of pin signals
 void loop() {
   // Read and frame bytes from Serial4
   while (Serial4.available()) {
