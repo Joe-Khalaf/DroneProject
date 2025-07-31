@@ -6,6 +6,7 @@
 #include "control/pwm_esc.h"
 #include "elrs_crsf/crsf.h"
 #include "ui/ui.h"
+#include "sd/sd.h"
 
 void setup() {
     initLEDs();
@@ -15,6 +16,7 @@ void setup() {
     initPWM();
     initCRSF();
     initUI();
+    initSD();
 }
 
 void loop() {
@@ -25,5 +27,6 @@ void loop() {
     updatePWM();
     updateCRSF();
     updateUI();
+    updateSD();
     delay(100);
 }
