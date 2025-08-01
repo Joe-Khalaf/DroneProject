@@ -1,19 +1,19 @@
 #include <Arduino.h>
 #include <Servo.h>
-#include "pwm_esc.h"
+#include "controller.h"
 #include "elrs_crsf/crsf.h"
 
 // ESC objects
 static Servo esc0, esc1, esc2, esc3;
 
-void initPWM() {
+void initCTRL() {
   esc0.attach(0);   // Front Left  (CW)
   esc1.attach(1);   // Front Right (CCW)
   esc2.attach(25);  // Rear Right  (CW)
   esc3.attach(33);  // Rear Left   (CCW)
 }
 
-void updatePWM() {
+void updateCTRL() {
   // Remap raw RC values
   int roll     = map(rcChannels[0], 172, 1811, -500, 500);   // CH0
   int pitch    = map(rcChannels[1], 172, 1811, -500, 500);   // CH1

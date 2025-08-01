@@ -26,10 +26,6 @@
 #define PIN_LED_B    5
 #define PIN_BUZZER   2
 
-// === Pyro Channels ===
-#define PYRO1_PIN    8
-#define PYRO2_PIN    7
-
 // === Other Constants ===
 #define G_TO_MPS2    9.81
 #define TELEMETRY_INTERVAL_MS 250
