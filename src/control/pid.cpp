@@ -1,16 +1,49 @@
+// pid.cpp
 #include "pid.h"
-#include <Arduino.h>
-#include <Servo.h>
 
-// Placeholder global PID instances
-PID pidRoll(0, 0, 0, 0);
-PID pidPitch(0, 0, 0, 0);
-PID pidYaw(0, 0, 0, 0);
+// ——— PID Class Method Definitions —————————————————————
+
+PID::PID(float kp_, float ki_, float kd_)
+  : kp(kp_), ki(ki_), kd(kd_), prevError(0), integral(0) {}
+
+float PID::compute(float target, float actual) {
+  float error     = target - actual;
+  integral       += error;
+  float derivative = error - prevError;
+  prevError       = error;
+  return kp * error + ki * integral + kd * derivative;
+}
+
+void PID::reset() {
+  prevError = 0;
+  integral  = 0;
+}
+
+// ——— Global PID Instances ————————————————————————————
+
+PID pidRoll(1.2f, 0.0f, 0.03f);
+PID pidPitch(1.2f, 0.0f, 0.03f);
+PID pidYaw(1.0f, 0.0f, 0.02f);
+
+// ——— Initialization —————————————————————————————————
 
 void initPID() {
-    // Initialize PIDs with tuned gains here later
+  pidRoll.reset();
+  pidPitch.reset();
+  pidYaw.reset();
 }
 
-void updatePID() {
-    // Compute PID outputs here later
+// ——— Axis-specific Helpers ——————————————————————————
+
+float getRollCorrection(float targetRate, float currentRate) {
+  return pidRoll.compute(targetRate, currentRate);
 }
+
+float getPitchCorrection(float targetRate, float currentRate) {
+  return pidPitch.compute(targetRate, currentRate);
+}
+
+float getYawCorrection(float targetRate, float currentRate) {
+  return pidYaw.compute(targetRate, currentRate);
+}
+

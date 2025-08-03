@@ -30,6 +30,5 @@ void loop() {
     updateCRSF();
     updateUI();
     updateSD();
-    updatePID();
     delay(100);
 }
