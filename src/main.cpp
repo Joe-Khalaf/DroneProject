@@ -31,5 +31,5 @@ void loop() {
     updateUI();
     updateSD();
     updatePID();
-    delay(100);
+    delay(50);
 }
