@@ -12,23 +12,26 @@
 void setup() {
     initLEDs();
     initSensors();
-    initRFM95();
-    initGPS();
     initCTRL();
     initCRSF();
-    initUI();
-    initSD();
     initPID();
+
+    // initRFM95();
+    // initGPS();
+    // initUI();
+    // initSD();
 }
 
 void loop() {
-    updateLEDs();
-    updateSensors();
-    updateGPS();
-    updateRFM95();
     updateCTRL();
+    updateSensors();
     updateCRSF();
-    updateUI();
-    updateSD();
+
+    // updateLEDs();
+    // updateGPS();
+    // updateRFM95();
+    // updateUI();
+    // updateSD();
+
     delay(100);
 }

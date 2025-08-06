@@ -12,6 +12,18 @@ float gyroX = 0;
 float gyroY = 0;
 float gyroZ = 0;
 
+// Gyro bias offsets (measured at startup)
+static float gyroXOffset = 0;
+static float gyroYOffset = 0;
+static float gyroZOffset = 0;
+
+// ——— Gyro Smoothing Config ——————————————————————
+constexpr int GYRO_AVG_WINDOW = 5;
+static float gyroXBuffer[GYRO_AVG_WINDOW] = {0};
+static float gyroYBuffer[GYRO_AVG_WINDOW] = {0};
+static float gyroZBuffer[GYRO_AVG_WINDOW] = {0};
+static int gyroIndex = 0;
+
 // ——— Sensor objects ————————————————————————————————
 static Adafruit_BME280 bme;
 static MPU6500_WE     mpu(MPU6500_ADDRESS);
@@ -46,6 +58,13 @@ void initSensors() {
   // Full-scale ranges
   mpu.setGyrRange(MPU6500_GYRO_RANGE_250);  // ±250 °/s
   mpu.setAccRange(MPU6500_ACC_RANGE_4G);     // ±4 g
+
+  delay(500);  // Allow sensor to settle
+
+  xyzFloat bias = mpu.getGyrValues();
+  gyroXOffset = bias.x;
+  gyroYOffset = bias.y;
+  gyroZOffset = bias.z;
 }
 
 void updateSensors() {
@@ -60,9 +79,30 @@ void updateSensors() {
 
   // Gyro rates in °/s (scaled by library)
   xyzFloat gyrVal = mpu.getGyrValues();
-  gyroX = gyrVal.x;
-  gyroY = gyrVal.y;
-  gyroZ = gyrVal.z;
+  float gx = gyrVal.x - gyroXOffset;
+  float gy = gyrVal.y - gyroYOffset;
+  float gz = gyrVal.z - gyroZOffset;
+
+  // ——— Store into circular buffer ———
+  gyroXBuffer[gyroIndex] = gx;
+  gyroYBuffer[gyroIndex] = gy;
+  gyroZBuffer[gyroIndex] = gz;
+
+  // ——— Compute average ———
+  float sumX = 0, sumY = 0, sumZ = 0;
+  for (int i = 0; i < GYRO_AVG_WINDOW; ++i) {
+    sumX += gyroXBuffer[i];
+    sumY += gyroYBuffer[i];
+    sumZ += gyroZBuffer[i];
+  }
+
+  gyroX = sumX / GYRO_AVG_WINDOW;
+  gyroY = sumY / GYRO_AVG_WINDOW;
+  gyroZ = sumZ / GYRO_AVG_WINDOW;
+
+  // ——— Update buffer index ———
+  gyroIndex = (gyroIndex + 1) % GYRO_AVG_WINDOW;
+
 
   // —— Convert acceleration to m/s² ——
   float ax = accRaw.x * G_TO_MPS2;
