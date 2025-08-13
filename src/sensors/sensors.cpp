@@ -110,35 +110,34 @@ void updateSensors() {
   float az = accRaw.z * G_TO_MPS2;
 
   // —— Compute roll & pitch from accel (degrees) ——
-  currentRoll  = atan2f(accRaw.y, accRaw.z)                                 * RAD_TO_DEGREES;
-  currentPitch = atan2f(-accRaw.x,
-                       sqrtf(accRaw.y*accRaw.y + accRaw.z*accRaw.z))         * RAD_TO_DEGREES;
+  currentRoll  = atan2f(accRaw.y, accRaw.z) * RAD_TO_DEGREES;
+  currentPitch = atan2f(-accRaw.x, sqrtf(accRaw.y*accRaw.y + accRaw.z*accRaw.z)) * RAD_TO_DEGREES;
 
   // —— (Optional) Print everything out ——  
   Serial.println(F("===== Sensor Readings ====="));
-  Serial.print(F("Temp (°C): "));  Serial.println(temp, 2);
-  Serial.print(F("Press (hPa): "));Serial.println(pressure, 1);
-  Serial.print(F("Alt  (m): "));   Serial.println(altitude, 1);
-  Serial.println();
+  // Serial.print(F("Temp (°C): "));  Serial.println(temp, 2);
+  // Serial.print(F("Press (hPa): "));Serial.println(pressure, 1);
+  // Serial.print(F("Alt  (m): "));   Serial.println(altitude, 1);
+  // Serial.println();
 
-  Serial.println(F("Accel per axis:"));
-  Serial.print(F("  X: ")); Serial.print(accRaw.x,3); Serial.print(F(" g, "));
-                           Serial.print(ax,2);      Serial.println(F(" m/s²"));
-  Serial.print(F("  Y: ")); Serial.print(accRaw.y,3); Serial.print(F(" g, "));
-                           Serial.print(ay,2);      Serial.println(F(" m/s²"));
-  Serial.print(F("  Z: ")); Serial.print(accRaw.z,3); Serial.print(F(" g, "));
-                           Serial.print(az,2);      Serial.println(F(" m/s²"));
-  Serial.println();
+  // Serial.println(F("Accel per axis:"));
+  // Serial.print(F("  X: ")); Serial.print(accRaw.x,3); Serial.print(F(" g, "));
+  //                          Serial.print(ax,2);      Serial.println(F(" m/s²"));
+  // Serial.print(F("  Y: ")); Serial.print(accRaw.y,3); Serial.print(F(" g, "));
+  //                          Serial.print(ay,2);      Serial.println(F(" m/s²"));
+  // Serial.print(F("  Z: ")); Serial.print(accRaw.z,3); Serial.print(F(" g, "));
+  //                          Serial.print(az,2);      Serial.println(F(" m/s²"));
+  // Serial.println();
 
-  Serial.print(F("Roll (°): "));  Serial.println(currentRoll,1);
-  Serial.print(F("Pitch(°): "));  Serial.println(currentPitch,1);
-  Serial.println();
+  // Serial.print(F("Roll (°): "));  Serial.println(currentRoll,1);
+  // Serial.print(F("Pitch(°): "));  Serial.println(currentPitch,1);
+  // Serial.println();
 
-  Serial.print(F("Gyro °/s [X,Y,Z]: "));
-  Serial.print(gyroX,1); Serial.print(F(", "));
-  Serial.print(gyroY,1); Serial.print(F(", "));
-  Serial.println(gyroZ,1);
-  Serial.println();
+  // Serial.print(F("Gyro °/s [X,Y,Z]: "));
+  // Serial.print(gyroX,1); Serial.print(F(", "));
+  // Serial.print(gyroY,1); Serial.print(F(", "));
+  // Serial.println(gyroZ,1);
+  // Serial.println();
 }
 
 float getPitch() { return currentPitch; }

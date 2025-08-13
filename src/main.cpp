@@ -10,11 +10,14 @@
 #include "control/pid.h"
 
 void setup() {
+    delay(2000);
+    
     initLEDs();
     initSensors();
+    // initPID();
+    // initCRSF();
     initCTRL();
-    initCRSF();
-    initPID();
+
 
     // initRFM95();
     // initGPS();
@@ -23,9 +26,9 @@ void setup() {
 }
 
 void loop() {
-    updateCTRL();
     updateSensors();
-    updateCRSF();
+    updateCTRL();
+    // updateCRSF();
 
     // updateLEDs();
     // updateGPS();
@@ -33,5 +36,5 @@ void loop() {
     // updateUI();
     // updateSD();
 
-    delay(100);
+    delay(6);
 }

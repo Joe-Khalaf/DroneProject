@@ -3,6 +3,7 @@
 
 void initCTRL();
 void updateCTRL();
+void stopCTRL();
 
 #endif
 
