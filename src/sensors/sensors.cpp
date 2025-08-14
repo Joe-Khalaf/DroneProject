@@ -18,7 +18,7 @@ static float gyroYOffset = 0;
 static float gyroZOffset = 0;
 
 // ——— Gyro Smoothing Config ——————————————————————
-constexpr int GYRO_AVG_WINDOW = 5;
+constexpr int GYRO_AVG_WINDOW = 1;
 static float gyroXBuffer[GYRO_AVG_WINDOW] = {0};
 static float gyroYBuffer[GYRO_AVG_WINDOW] = {0};
 static float gyroZBuffer[GYRO_AVG_WINDOW] = {0};
@@ -61,10 +61,10 @@ void initSensors() {
 
   delay(500);  // Allow sensor to settle
 
-  xyzFloat bias = mpu.getGyrValues();
-  gyroXOffset = bias.x;
-  gyroYOffset = bias.y;
-  gyroZOffset = bias.z;
+  // xyzFloat bias = mpu.getGyrValues();
+  // gyroXOffset = bias.x;
+  // gyroYOffset = bias.y;
+  // gyroZOffset = bias.z;
 }
 
 void updateSensors() {
@@ -78,27 +78,33 @@ void updateSensors() {
   xyzFloat accRaw = mpu.getGValues();
 
   // Gyro rates in °/s (scaled by library)
-  xyzFloat gyrVal = mpu.getGyrValues();
-  float gx = gyrVal.x - gyroXOffset;
-  float gy = gyrVal.y - gyroYOffset;
-  float gz = gyrVal.z - gyroZOffset;
+  xyzFloat g = mpu.getGyrValues();   // already offset-corrected by autoOffsets
+  gyroX = (gyroX * 4 + g.x) / 5.0f;  // keep your 5-sample average if you like
+  gyroY = (gyroY * 4 + g.y) / 5.0f;
+  gyroZ = (gyroZ * 4 + g.z) / 5.0f;
 
-  // ——— Store into circular buffer ———
-  gyroXBuffer[gyroIndex] = gx;
-  gyroYBuffer[gyroIndex] = gy;
-  gyroZBuffer[gyroIndex] = gz;
 
-  // ——— Compute average ———
-  float sumX = 0, sumY = 0, sumZ = 0;
-  for (int i = 0; i < GYRO_AVG_WINDOW; ++i) {
-    sumX += gyroXBuffer[i];
-    sumY += gyroYBuffer[i];
-    sumZ += gyroZBuffer[i];
-  }
+  // xyzFloat gyrVal = mpu.getGyrValues();
+  // float gx = gyrVal.x - gyroXOffset;
+  // float gy = gyrVal.y - gyroYOffset;
+  // float gz = gyrVal.z - gyroZOffset;
 
-  gyroX = sumX / GYRO_AVG_WINDOW;
-  gyroY = sumY / GYRO_AVG_WINDOW;
-  gyroZ = sumZ / GYRO_AVG_WINDOW;
+  // // ——— Store into circular buffer ———
+  // gyroXBuffer[gyroIndex] = gx;
+  // gyroYBuffer[gyroIndex] = gy;
+  // gyroZBuffer[gyroIndex] = gz;
+
+  // // ——— Compute average ———
+  // float sumX = 0, sumY = 0, sumZ = 0;
+  // for (int i = 0; i < GYRO_AVG_WINDOW; ++i) {
+  //   sumX += gyroXBuffer[i];
+  //   sumY += gyroYBuffer[i];
+  //   sumZ += gyroZBuffer[i];
+  // }
+
+  // gyroX = sumX / GYRO_AVG_WINDOW;
+  // gyroY = sumY / GYRO_AVG_WINDOW;
+  // gyroZ = sumZ / GYRO_AVG_WINDOW;
 
   // ——— Update buffer index ———
   gyroIndex = (gyroIndex + 1) % GYRO_AVG_WINDOW;
@@ -110,11 +116,11 @@ void updateSensors() {
   float az = accRaw.z * G_TO_MPS2;
 
   // —— Compute roll & pitch from accel (degrees) ——
-  currentRoll  = atan2f(accRaw.y, accRaw.z) * RAD_TO_DEGREES;
+  // currentRoll  = atan2f(accRaw.y, accRaw.z) * RAD_TO_DEGREES;
   currentPitch = atan2f(-accRaw.x, sqrtf(accRaw.y*accRaw.y + accRaw.z*accRaw.z)) * RAD_TO_DEGREES;
 
   // —— (Optional) Print everything out ——  
-  Serial.println(F("===== Sensor Readings ====="));
+  // Serial.println(F("===== Sensor Readings ====="));
   // Serial.print(F("Temp (°C): "));  Serial.println(temp, 2);
   // Serial.print(F("Press (hPa): "));Serial.println(pressure, 1);
   // Serial.print(F("Alt  (m): "));   Serial.println(altitude, 1);

@@ -36,5 +36,6 @@ void loop() {
     // updateUI();
     // updateSD();
 
-    delay(6);
+    delay(4);
 }
+
